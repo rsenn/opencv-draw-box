@@ -62,4 +62,9 @@ image load_image_cv(char *filename, int channels);
 int show_image_cv(image im, const char* name, int ms);
 void make_window(char *name, int w, int h, int fullscreen);
 
+// #################################
+
+static void add_pixel(image m, int x, int y, int c, float val);
+image resize_image(image im, int w, int h);
+
 #endif
