@@ -1,5 +1,10 @@
 #include "image.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
 image **load_alphabet()
 {
     int i, j;
@@ -16,12 +21,24 @@ image **load_alphabet()
     return alphabets;
 }
 
-// ###################################################################################################
+// ######################### blas.c / fill_cpu() for tile_images() using
 
 void fill_cpu(int N, float ALPHA, float *X, int INCX)
 {
     int i;
     for(i = 0; i < N; ++i) X[i*INCX] = ALPHA;
+}
+
+// ######################### image.c / get_label / draw_label
+
+image tile_images(image a, image b, int dx)
+{
+    if(a.w == 0) return copy_image(b);
+    image c = make_image(a.w + b.w + dx, (a.h > b.h) ? a.h : b.h, (a.c > b.c) ? a.c : b.c);
+    fill_cpu(c.w*c.h*c.c, 1, c.data, 1);
+    embed_image(a, c, 0, 0); 
+    composite_image(b, c, a.w + dx, 0);
+    return c;
 }
 
 void embed_image(image source, image dest, int dx, int dy)
@@ -49,16 +66,6 @@ void composite_image(image source, image dest, int dx, int dy)
             }
         }
     }
-}
-
-image tile_images(image a, image b, int dx)
-{
-    if(a.w == 0) return copy_image(b);
-    image c = make_image(a.w + b.w + dx, (a.h > b.h) ? a.h : b.h, (a.c > b.c) ? a.c : b.c);
-    fill_cpu(c.w*c.h*c.c, 1, c.data, 1);
-    embed_image(a, c, 0, 0); 
-    composite_image(b, c, a.w + dx, 0);
-    return c;
 }
 
 static float get_pixel(image m, int x, int y, int c)
@@ -137,7 +144,7 @@ void draw_label(image a, int r, int c, image label, const float *rgb)
     }
 }
 
-// ####################################################################################################
+// ######################### image.c / draw_box / draw_box_width
 
 image load_image(char *filename, int w, int h, int c)
 {
@@ -253,7 +260,7 @@ image load_image_color(char *filename, int w, int h)
     return load_image(filename, w, h, 3);
 }
 
-// #####################################################################################
+// ######################### image_opencv.cpp / convert image / show image
 
 IplImage *image_to_ipl(image im)
 {
@@ -281,11 +288,14 @@ image ipl_to_image(IplImage* src)
     int step = src->widthStep;
     int i, j, k;
 
+    printf("%d\n", step);
+
     for(i = 0; i < h; ++i){
         for(k= 0; k < c; ++k){
             for(j = 0; j < w; ++j){
-                // #### to get image information
+                // ##### to get image information
                 //printf("%d ", (int)data[i*step + j*c + k]);
+                //printf("%u ", (unsigned char)data[i*step + j*c + k]);
 
                 im.data[k*w*h + i*w + j] = data[i*step + j*c + k]/255.;
             }
@@ -380,7 +390,7 @@ void make_window(char *name, int w, int h, int fullscreen)
     }
 }
 
-// #######################################################################
+// ######################### image.c / resize_image
 
 static void add_pixel(image m, int x, int y, int c, float val)
 {
@@ -430,4 +440,36 @@ image resize_image(image im, int w, int h)
 
     free_image(part);
     return resized;
+}
+
+// ######################### image.c / save_image
+
+void save_image_options(image im, const char *name, IMTYPE f, int quality)
+{
+    char buff[256];
+    //sprintf(buff, "%s (%d)", name, windows);
+    if(f == PNG)       sprintf(buff, "%s.png", name);
+    else if (f == BMP) sprintf(buff, "%s.bmp", name);
+    else if (f == TGA) sprintf(buff, "%s.tga", name);
+    else if (f == JPG) sprintf(buff, "%s.jpg", name);
+    else               sprintf(buff, "%s.png", name);
+    unsigned char *data = (unsigned char *)calloc(im.w*im.h*im.c, sizeof(char));
+    int i,k;
+    for(k = 0; k < im.c; ++k){
+        for(i = 0; i < im.w*im.h; ++i){
+            data[i*im.c+k] = (unsigned char) (255*im.data[i + k*im.w*im.h]);
+        }
+    }
+    int success = 0;
+    if(f == PNG)       success = stbi_write_png(buff, im.w, im.h, im.c, data, im.w*im.c);
+    else if (f == BMP) success = stbi_write_bmp(buff, im.w, im.h, im.c, data);
+    else if (f == TGA) success = stbi_write_tga(buff, im.w, im.h, im.c, data);
+    else if (f == JPG) success = stbi_write_jpg(buff, im.w, im.h, im.c, data, quality);
+    free(data);
+    if(!success) fprintf(stderr, "Failed to write image %s\n", buff);
+}
+
+void save_image(image im, const char *name)
+{
+    save_image_options(im, name, JPG, 80);
 }

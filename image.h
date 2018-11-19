@@ -14,6 +14,8 @@ typedef struct{
     int x1, y1, x2, y2;
 } person_box;
 
+// ######################### darknet.h
+
 typedef struct {
     int h;
     int w;
@@ -21,20 +23,30 @@ typedef struct {
     float *data;
 } image;
 
+typedef enum{
+    PNG, BMP, TGA, JPG
+} IMTYPE;
+
+
+// ######################### image.c / load_alphabet
+
 image **load_alphabet();
 
 // ######################### image.c / get_label / draw_label
 
-void fill_cpu(int N, float ALPHA, float *X, int INCX);
+image tile_images(image a, image b, int dx);
 void embed_image(image source, image dest, int dx, int dy);
 void composite_image(image source, image dest, int dx, int dy);
-image tile_images(image a, image b, int dx);
 static float get_pixel(image m, int x, int y, int c);
 static float get_pixel_extend(image m, int x, int y, int c);
 static void set_pixel(image m, int x, int y, int c, float val);
 image border_image(image a, int border);
 image get_label(image **characters, char *string, int size);
 void draw_label(image a, int r, int c, image label, const float *rgb);
+
+// ######################### blas.c / fill_cpu() for tile_images() using
+
+void fill_cpu(int N, float ALPHA, float *X, int INCX);
 
 // ######################### image.c / draw_box / draw_box_width
 
@@ -62,7 +74,7 @@ image load_image_cv(char *filename, int channels);
 int show_image_cv(image im, const char* name, int ms);
 void make_window(char *name, int w, int h, int fullscreen);
 
-// #################################
+// ######################### image.c / resize_image
 
 static void add_pixel(image m, int x, int y, int c, float val);
 image resize_image(image im, int w, int h);

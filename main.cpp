@@ -1,5 +1,6 @@
 #include "image.h"
 #include "mjpeg_streaming.h"
+#include "json_server.h"
 #include <iostream>
 
 using namespace std;
@@ -12,21 +13,21 @@ int main()
 {
     image im = load_image_color("predictions.jpg", 0, 0);
 
-    //im = resize_image(im, 400, 300);
+    im = resize_image(im, 100, 100);
 
     int w = im.w, h = im.h, c = im.c;
     int im_size = h*w*c;
 
     printf("w=%d, h=%d, c=%d, im_size=%d\n", w, h, c, im_size);
 
-    for(int i=0; i<im_size; i++)
+    /*for(int i=0; i<im_size; i++)
     {
         if(i % 100 == 0) cout<<endl;
 
-        cout<<(int)(im.data[i]*(255))<<"  ";
-    }
+        //cout<<(int)(im.data[i]*(255))<<"  ";
+    }*/
 
-    show_image_cv(im, "predictions", 0);
+    //show_image_cv(im, "predictions", 0);
 
     //int c =  show_image_cv(im, "predictions", 0);
 
@@ -34,7 +35,7 @@ int main()
     int c = show_image_cv(in, "Demo", 0);*/
     //cout<<c<<endl;
 
-    while(1);
+    //while(1);
 
     /*alphabet = load_alphabet(); // read all alphabet picture
 
