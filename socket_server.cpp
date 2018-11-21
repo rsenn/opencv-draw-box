@@ -101,20 +101,24 @@ class ServerSocket
 
         int receive_len = 0;
         int rest_len = message_len;
-        char buffer[BUFFER_MAX];
-        memset(buffer, '\0', sizeof(char) * BUFFER_MAX);
+        char buffer[BUFFER_MAX+1]; // plus one is for big data (4096), because it needs '\0' to decide string end
+        memset(buffer, '\0', sizeof(buffer));
+
+        std::cout<<"should receive: "<<message_len<<std::endl;
 
         if(message_len <= BUFFER_MAX)
         {
             receive_len = recv(receive_sock, buffer, message_len, 0);
+            message += buffer;
         }
         else
         {
-            while(rest_len)
+            while(rest_len > 0)
             {
                 if(rest_len <= BUFFER_MAX)
                 {
                     receive_len += recv(receive_sock, buffer, rest_len, 0);
+                    rest_len = message_len - receive_len;
                 }
                 else
                 {
@@ -123,11 +127,13 @@ class ServerSocket
                 }
 
                 message += buffer;
-                memset(buffer, '\0', sizeof(char) * BUFFER_MAX); // clear buffer for new message
+                memset(buffer, '\0', sizeof(buffer)); // clear buffer for new message
+
+                std::cout<<rest_len<<std::endl;
             }
         }
 
-        //std::cout<<message<<std::endl;
+        std::cout<<message<<" ("<<message.size()<<")"<<std::endl;
 
         return message;
     }
@@ -219,7 +225,11 @@ public:
 
                 std::cout<<sock<<" receive: "<<message_len<<std::endl;
 
-                if(message_len == 0)
+                if(message_len > 0)
+                {
+                    _read(sock, message_len);
+                }
+                else
                 {
                     std::cout<<"check"<<std::endl;
                     int n = _write_len(sock, message_len);
