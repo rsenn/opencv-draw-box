@@ -18,9 +18,12 @@
 #define HOSTENT struct hostent
 #define SOCKADDR struct sockaddr
 #define SOCKADDR_IN struct sockaddr_in
-#define ADDRPOINTER unsigned int*
+#define ADDRPOINTER unsigned int *
 #define SOCKLEN_T socklen_t
+#define SELECT_SET fd_set
 #define INVALID_SOCKET -1
 #define SOCKET_ERROR -1
+
+#define BUFFER_MAX 4096
 
 #endif

@@ -1,6 +1,6 @@
 #include "image.h"
 #include "mjpeg_streaming.h"
-#include "json_server.h"
+#include "socket_server.h"
 #include <iostream>
 
 using namespace std;
@@ -11,14 +11,35 @@ static image **alphabet;
 
 int main()
 {
-    image im = load_image_color("predictions.jpg", 0, 0);
 
-    im = resize_image(im, 100, 100);
+    while(1)
+    {
+        receive_message(8090, 200, 95);
+    }
 
-    int w = im.w, h = im.h, c = im.c;
-    int im_size = h*w*c;
+    /*char buffer[BUFFER_MAX];
+    memset(buffer, '\0', sizeof(char) * BUFFER_MAX);
 
-    printf("w=%d, h=%d, c=%d, im_size=%d\n", w, h, c, im_size);
+    strcpy(buffer, "test for buffer");
+
+    cout<<strlen(buffer)<<endl;
+
+    string message;
+    message.clear();
+
+    message += buffer;
+
+    cout<<message.size()<<endl;*/
+
+
+    //image im = load_image_color("predictions.jpg", 0, 0);
+
+    //im = resize_image(im, 100, 100);
+
+    //int w = im.w, h = im.h, c = im.c;
+    //int im_size = h*w*c;
+
+    //printf("w=%d, h=%d, c=%d, im_size=%d\n", w, h, c, im_size);
 
     /*for(int i=0; i<im_size; i++)
     {

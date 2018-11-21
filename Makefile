@@ -8,7 +8,7 @@ OBJDIR = ./obj/
 #EXT = .cpp
 #OBJ = $(SRCS:$(EXT)=.o)
 
-OBJ = main.o image.o cJSON.o mjpeg_streaming.o
+OBJ = main.o image.o cJSON.o mjpeg_streaming.o socket_server.o
 OBJS = $(addprefix $(OBJDIR), $(OBJ))
 EXEC = a.out
 
