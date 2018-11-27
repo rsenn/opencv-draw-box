@@ -8,13 +8,26 @@ using namespace std;
 static void * cap;
 static image im;
 static image **alphabet;
+static std::vector<uchar> frame;
 
 int main()
 {
 
     while(1)
     {
-        receive_message(8090, 200, 95);
+        frame = receive_frame(8090, 200, 95);
+
+        if(frame.empty())
+        {
+
+        }
+        else
+        {
+            cv::Mat m = imdecode(frame, 1);
+            imshow("Receiver", m);
+            waitKey(1);
+        }
+        
     }
 
     /*char buffer[BUFFER_MAX];
