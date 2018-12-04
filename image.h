@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
 
 #include "opencv2/opencv.hpp"
 using namespace cv;
@@ -10,6 +11,7 @@ using namespace cv;
 #define PERSON_MAX_NUM 10
 
 typedef struct{
+    std::string name;
     int id;
     int x1, y1, x2, y2;
 } person_box;

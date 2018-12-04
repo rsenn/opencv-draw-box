@@ -288,7 +288,7 @@ image ipl_to_image(IplImage* src)
     int step = src->widthStep;
     int i, j, k;
 
-    printf("%d\n", step);
+    //printf("%d\n", step);
 
     for(i = 0; i < h; ++i){
         for(k= 0; k < c; ++k){
