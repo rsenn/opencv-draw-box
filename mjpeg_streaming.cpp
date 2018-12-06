@@ -1,8 +1,5 @@
 #include "mjpeg_streaming.h"
 
-#include <iostream>
-#include "opencv2/opencv.hpp"
-
 class MJPGWriter
 {
     SOCKET sock;
@@ -210,6 +207,18 @@ cv::Mat image_to_mat(image im)
     free_image(copy);
     return m;
 }*/
+
+void send_mjpeg(cv::Mat im, int port, int timeout, int quality) {
+    
+    // create only one MJPGWriter object
+    static MJPGWriter mjpeg_writer(port, timeout, quality);
+
+    cv::Mat mat;
+
+    //cv::resize(image_to_mat(im), mat, cv::Size(1352, 1013));
+
+    mjpeg_writer.write(im);
+}
 
 void send_mjpeg(image im, int port, int timeout, int quality) {
     

@@ -2,9 +2,11 @@
 #include "mjpeg_streaming.h"
 #include "socket_server.h"
 #include <iostream>
+#include <vector>
+#include <map>
 #include <Python.h>
 
-using namespace std;
+#include <fstream>
 
 static void * cap;
 static cv::Mat m;
@@ -12,6 +14,8 @@ static image im;
 static image **alphabet;
 static std::vector<uchar> frame;
 static std::vector<person_box> boxes;
+
+static std::map<std::string, image> tag_pics;
 
 static PyObject *pModule, *pDict, *pFunc, *pFrameList, *pBoxDict, *pBoxList, *pTuple;
 
@@ -131,8 +135,93 @@ void iot_receive()
     }
 }
 
+void load_tag_pic()
+{
+    tag_pics.clear();
+
+    std::ifstream in("tag_pic/tag_pic.txt");
+
+    if(!in)
+    {
+        std::cout<<"Cannot open input file."<<std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    std::string str, tag_str;
+
+    while (std::getline(in, str))
+    {
+        // output the line
+        tag_str = "tag_pic/" + str;
+        str = str.substr(0, str.size() - 4); // remove .jpg
+        std::cout<<str<<std::endl;
+        std::cout<<tag_str<<std::endl;
+        tag_pics.insert(std::pair<std::string, image>(str, resize_image(load_image_color((char *)tag_str.c_str(), 100, 100), 100, 100)));
+
+        /*cv::Mat m = image_to_mat(tag_pics);
+        imshow(str, m);
+        waitKey(1);*/
+    }
+
+    in.close();
+}
+
+void draw_tag_pic(image im, std::string tag_name, int &all_tag_count, int &legal_tag_count)
+{
+    int tag_pic_width = 220;
+    int is_legal_tag = 0;
+
+    int dx = im.w - tag_pic_width + 60;
+    int dy;
+
+    if (tag_name != "unknown")
+    {
+        legal_tag_count++;
+        dy = 40 + (int)100 * (legal_tag_count - 1); // legal tag position
+        is_legal_tag = 1;
+    }
+    else
+    {
+        dy = 40 + (int)160 * (all_tag_count - legal_tag_count); // unknown tag position
+    }
+
+    all_tag_count++;
+
+    dy += (is_legal_tag) ? 30 : (int)im.h / 2;
+
+    embed_image(tag_pics[tag_name], im, dx, dy);
+
+    // draw label on tag
+    float rgb[3];
+    if(is_legal_tag)
+    {
+        image label = get_label(alphabet, (char *)tag_name.c_str(), (im.h*.03)/10);
+        
+        rgb[0] = 0.0;
+        rgb[1] = 1.0;
+        rgb[2] = 0.0;
+
+        //draw_label(im, dy, dx - 40, label, rgb);
+        draw_label(im, dy, dx, label, rgb);
+        free_image(label);
+    }
+    else
+    {
+        image label = get_label(alphabet, (char *)tag_name.c_str(), (im.h*.03)/16);
+
+        rgb[0] = 1.0;
+        rgb[1] = 0.0;
+        rgb[2] = 0.0;
+
+        draw_label(im, dy, dx, label, rgb);
+        free_image(label);
+    }
+
+}
+
 int main()
 {
+    load_tag_pic();
     alphabet = load_alphabet();
     int red = 0, green = 0, blue = 255; // box color
     float rgb[3] = {red, green, blue};
@@ -144,7 +233,10 @@ int main()
     int top = 50; // y1
     int right = 200; // x2
     int bot = 300; // y2
-    string name = "person_name";
+    std::string name = "person_name";
+
+    int legal_tag_count = 0;
+    int all_tag_count = 0;
 
     iot_init();
 
@@ -157,13 +249,27 @@ int main()
             m = imdecode(frame, 1);
             im = mat_to_image(m);
             
-            width = im.h * .012;
+            width = im.h * .006;
             alphabet_size = im.h*.03;
 
             image label;
 
+            legal_tag_count = 0;
+            all_tag_count = 0;
+
             for(int i = 0; i < boxes.size(); i++)
             {
+                if(boxes[i].name == "unknown")
+                {
+                    red = 255; green = 0; blue = 0;
+                }
+                else
+                {
+                    red = 0; green = 255; blue = 0;
+                }
+
+                rgb[0] = red; rgb[1] = green; rgb[2] = blue; // setting color
+
                 left = boxes[i].x1;
                 top = boxes[i].y1;
                 right = boxes[i].x2;
@@ -171,6 +277,13 @@ int main()
                 draw_box_width(im, left, top, right, bot, width, red, green, blue);
                 image label = get_label(alphabet, (char *)boxes[i].name.c_str(), alphabet_size);
                 draw_label(im, top + width + alphabet_size, left, label, rgb);
+
+                if(tag_pics.find(boxes[i].name) != tag_pics.end())
+                {
+                    // draw right board for picture in tag_pic folder
+                    draw_tag_pic(im, boxes[i].name, all_tag_count, legal_tag_count);
+                    //std::cout<<"find tag picture, "<<all_tag_count<<", "<<legal_tag_count<<std::endl;
+                }
             }
 
             //draw_box_width(im, left, top, right, bot, width, red, green, blue);
@@ -180,8 +293,10 @@ int main()
 
             m = image_to_mat(im);
 
-            imshow("Receiver", m);
-            waitKey(1);
+            send_mjpeg(m, 8090, 200, 95);
+
+            //imshow("Receiver", m);
+            //waitKey(1);
         }
     }
 
