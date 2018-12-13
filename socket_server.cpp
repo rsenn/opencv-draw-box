@@ -5,6 +5,11 @@
 #include <vector>
 #include "opencv2/opencv.hpp"
 
+typedef struct frame_with_stamp {
+    int frame_stamp;
+    std::vector<unsigned char> frame;
+} frame_with_stamp;
+
 class ServerSocket
 {
     SOCKET server_sock;
@@ -71,21 +76,32 @@ class ServerSocket
     {
         int send_len = 0;
 
-        /*const char *buffer = message.c_str();
+        //const char *buffer = message.c_str();
 
-        while(send_len < message_len)
-        {
-            send_len += send(send_sock, &buffer[send_len], message_len, 0);
-        }*/
+        //while(send_len < message_len)
+        //{
+        //    send_len += send(send_sock, &buffer[send_len], message_len, 0);
+        //}
 
         send_len = send(send_sock, message.c_str(), message_len, 0);
 
         return send_len;
     }
 
-    int _write_len(int send_sock, int messagee_len)
+    int _write_frame(int &send_sock, std::vector<unsigned char> frame, int frame_len)
     {
         int send_len = 0;
+
+        send_len = send(send_sock, frame.data(), frame_len, 0);
+
+        return send_len;
+    }
+
+    int _write_len(int send_sock, int messagee_len)
+    {
+        //std::cout<<"_write_len"<<std::endl;
+
+        int send_len = 0;  
 
         send_len = send(send_sock, &messagee_len, sizeof(int), 0);
 
@@ -104,7 +120,7 @@ class ServerSocket
         char buffer[BUFFER_MAX+1]; // plus one is for big data (4096), because it needs '\0' to decide string end
         memset(buffer, '\0', sizeof(buffer));
 
-        std::cout<<"should receive: "<<message_len<<std::endl;
+        //std::cout<<"should receive: "<<message_len<<std::endl;
 
         if(message_len <= BUFFER_MAX)
         {
@@ -129,11 +145,11 @@ class ServerSocket
                 message += buffer;
                 memset(buffer, '\0', sizeof(buffer)); // clear buffer for new message
 
-                std::cout<<rest_len<<std::endl;
+                //std::cout<<rest_len<<std::endl;
             }
         }
 
-        std::cout<<message<<" ("<<message.size()<<")"<<std::endl;
+        //std::cout<<message<<" ("<<message.size()<<")"<<std::endl;
 
         return message;
     }
@@ -141,17 +157,17 @@ class ServerSocket
     // @receive_sock
     // @message_len
     // @return: frame vector
-    std::vector<uchar> _read_frame(int receive_sock, int frame_len)
+    std::vector<unsigned char> _read_frame(int receive_sock, int frame_len)
     {
-        std::vector<uchar> frame;
+        std::vector<unsigned char> frame;
         frame.clear(); // initial message
 
         int receive_len = 0;
         int rest_len = frame_len;
-        uchar buffer[BUFFER_MAX+1]; // plus one is for big data (4096), because it needs '\0' to decide string end
+        unsigned char buffer[BUFFER_MAX+1]; // plus one is for big data (4096), because it needs '\0' to decide string end
         memset(buffer, '\0', sizeof(buffer));
 
-        std::cout<<"should receive: "<<frame_len<<std::endl;
+        //std::cout<<"should receive: "<<frame_len<<std::endl;
 
         if(frame_len <= BUFFER_MAX)
         {
@@ -176,7 +192,7 @@ class ServerSocket
                 frame.insert(frame.end(), buffer, buffer + receive_len);
                 memset(buffer, '\0', sizeof(buffer)); // clear buffer for new message
 
-                std::cout<<frame.size()<<std::endl;
+                //std::cout<<frame.size()<<std::endl;
                 //std::cout<<rest_len<<std::endl;
                 //std::cout<<receive_len<<std::endl;
             }
@@ -276,7 +292,7 @@ public:
 
                 if(message_len > 0)
                 {
-                    std::vector<uchar> frame = _read_frame(sock, message_len);
+                    std::vector<unsigned char> frame = _read_frame(sock, message_len);
                     std::cout<<frame.size()<<std::endl;
                 }
                 else
@@ -295,7 +311,7 @@ public:
         return true;
     }*/
 
-    bool start(std::vector<uchar> &frame)
+    bool start(std::vector<unsigned char> &frame)
     {
         //std::cout<<"waiting..."<<std::endl;
 
@@ -343,16 +359,90 @@ public:
 
                 frame_len = _read_len(sock);
 
-                std::cout<<sock<<" receive: "<<frame_len<<std::endl;
+                //std::cout<<sock<<" receive: "<<frame_len<<std::endl;
 
                 if(frame_len > 0)
                 {
                     frame = _read_frame(sock, frame_len);
-                    std::cout<<frame.size()<<std::endl;
+                    //std::cout<<frame.size()<<std::endl;
                 }
                 else
                 {
-                    std::cout<<"check"<<std::endl;
+                    //std::cout<<"check"<<std::endl;
+                    int n = _write_len(sock, frame_len);
+                    if (n < 0) // client close or crash
+                    {
+                        std::cerr << "kill client " << sock << std::endl;
+                        shutdown(sock, 2);
+                        FD_CLR(sock, &masterfds);
+                        cvDestroyWindow("Demo");
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    bool start(std::vector<unsigned char> &frame, int &frame_stamp)
+    {
+        //std::cout<<"waiting..."<<std::endl;
+
+        SELECT_SET readfds = masterfds;
+
+        struct timeval tv = { 0, timeout };
+
+        // nothing broken, there's just noone listening
+        if (select(maxfd + 1, &readfds, NULL, NULL, &tv) <= 0) return true;
+        
+        for (int sock = 0; sock <= maxfd; sock++)
+        {
+            SOCKLEN_T addrlen = sizeof(SOCKADDR);
+
+            // check whether s is active
+            if (!FD_ISSET(sock, &readfds))
+                continue;
+            
+            // if s is equal to server_sock, s is server socket which need to accept client
+            if (sock == server_sock)
+            {
+                SOCKADDR_IN address = {0}; // client address information
+
+                SOCKET client_sock = accept(server_sock, (SOCKADDR*)&address, &addrlen);
+
+                if (client_sock == SOCKET_ERROR)
+                {
+                    std::cerr << "error : couldn't accept connection on server sock " << server_sock << " !" << std::endl;
+                    return false;
+                }
+
+                //const char *ip = inet_ntoa(address.sin_addr);
+                std::string client_ip = inet_ntoa(address.sin_addr);
+
+                maxfd = ( maxfd > client_sock ? maxfd : client_sock ); // reset maxfd with the larger one
+
+                FD_SET(client_sock, &masterfds); // insert client fd to masterfds
+
+                std::cerr << "new client " << client_sock << " : " << client_ip << std::endl;
+            }
+            else // s is client
+            {
+                frame_stamp = _read_len(sock);
+
+                int frame_len = 0;
+
+                frame_len = _read_len(sock);
+
+                //std::cout<<"frame_stamp : "<<frame_stamp<<std::endl;
+                //std::cout<<sock<<" receive: "<<frame_len<<std::endl;
+
+                if(frame_len > 0)
+                {
+                    frame = _read_frame(sock, frame_len);
+                    //std::cout<<frame.size()<<std::endl;
+                }
+                else
+                {
+                    //std::cout<<"check"<<std::endl;
                     int n = _write_len(sock, frame_len);
                     if (n < 0) // client close or crash
                     {
@@ -377,20 +467,29 @@ public:
     return "";
 }*/
 
-std::vector<uchar> receive_frame(int port, int timeout, int quality)
+
+int receive_frame(std::vector<unsigned char> &frame, int port, int timeout, int quality)
 {
     static ServerSocket server_socket(port, timeout, quality);
 
-    std::vector<uchar> frame;
+    int framp_stamp = 0;
+
+    server_socket.start(frame, framp_stamp);
+
+    return framp_stamp;
+}
+
+
+std::vector<unsigned char> receive_frame(int port, int timeout, int quality)
+{
+    static ServerSocket server_socket(port, timeout, quality);
+
+    std::vector<unsigned char> frame;
 
     server_socket.start(frame);
 
     return frame;
 }
-
-
-
-
 
 image json_to_image(const char * json_str)
 {

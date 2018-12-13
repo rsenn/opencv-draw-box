@@ -2,9 +2,15 @@ CC = gcc
 CXX = g++
 #PYTHON_VERSION = 2.7
 
+COMMON = 
+CFLAGS = 
+CXXFLAGS = 
+
+
 COMMON  += -DOPENCV
 CFLAGS += -DOPENCV
 #CXXFLAGS  += -DOPENCV
+CXXFLAGS += -std=c++11
 
 #LDFLAGS += `pkg-config --libs opencv-3.2.0`
 #COMMON  += `pkg-config --cflags opencv-3.2.0`
@@ -27,7 +33,7 @@ OBJDIR = ./obj/
 #EXT = .cpp
 #OBJ = $(SRCS:$(EXT)=.o)
 
-OBJ = main.o image.o cJSON.o mjpeg_streaming.o socket_server.o
+OBJ = main.o image.o DAI_pull.o cJSON.o mjpeg_streaming.o socket_server.o fusion.o
 OBJS = $(addprefix $(OBJDIR), $(OBJ))
 EXEC = a.out
 
@@ -37,13 +43,13 @@ mkdir_obj:
 	mkdir -p obj
 
 $(EXEC): $(OBJS)
-	$(CXX) $(COMMON) $(CFLAGS) $^ -o $@ $(LDFLAGS)
+	$(CXX) $(COMMON) $(CFLAGS) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 $(OBJDIR)%.o: %.cpp
-	$(CXX) $(COMMON) $(CFLAGS) -c $< -o $@ $(LDFLAGS)
+	$(CXX) $(COMMON) $(CFLAGS) $(CXXFLAGS) -c $< -o $@ $(LDFLAGS)
 
 $(OBJDIR)%.o: %.c
-	$(CC) $(COMMON) $(CFLAGS) -c $< -o $@ $(LDFLAGS)
+	$(CC) $(COMMON) $(CFLAGS) $(CXXFLAGS) -c $< -o $@ $(LDFLAGS)
 
 cleanall:clean cleanexe
 

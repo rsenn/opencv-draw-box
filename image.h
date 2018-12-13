@@ -1,17 +1,16 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
-
 #include "opencv2/opencv.hpp"
-using namespace cv;
 
-#define PERSON_MAX_NUM 10
+/*typedef struct{
+    std::string name;
+    int id;
+    int x1, y1, x2, y2;
+} person_box;*/
 
 typedef struct{
-    std::string name;
+    int frame_stamp;
     int id;
     int x1, y1, x2, y2;
 } person_box;
@@ -68,8 +67,8 @@ void free_image(image m);
 
 IplImage *image_to_ipl(image im);
 image ipl_to_image(IplImage* src);
-Mat image_to_mat(image im);
-image mat_to_image(Mat m);
+cv::Mat image_to_mat(image im);
+image mat_to_image(cv::Mat m);
 void *open_video_stream(const char *f, int c, int w, int h, int fps);
 image get_image_from_stream(void *p);
 image load_image_cv(char *filename, int channels);

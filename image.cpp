@@ -1,5 +1,9 @@
 #include "image.h"
 
+#include <cstdio>
+#include <cstdlib>
+#include <iostream>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -304,20 +308,20 @@ image ipl_to_image(IplImage* src)
     return im;
 }
 
-Mat image_to_mat(image im)
+cv::Mat image_to_mat(image im)
 {
     image copy = copy_image(im);
     constrain_image(copy);
     if(im.c == 3) rgbgr_image(copy);
 
     IplImage *ipl = image_to_ipl(copy);
-    Mat m = cvarrToMat(ipl, true);
+    cv::Mat m = cv::cvarrToMat(ipl, true);
     cvReleaseImage(&ipl);
     free_image(copy);
     return m;
 }
 
-image mat_to_image(Mat m)
+image mat_to_image(cv::Mat m)
 {
     IplImage ipl = m;
     image im = ipl_to_image(&ipl);
@@ -327,9 +331,9 @@ image mat_to_image(Mat m)
 
 void *open_video_stream(const char *f, int c, int w, int h, int fps)
 {
-    VideoCapture *cap;
-    if(f) cap = new VideoCapture(f);
-    else cap = new VideoCapture(c);
+    cv::VideoCapture *cap;
+    if(f) cap = new cv::VideoCapture(f);
+    else cap = new cv::VideoCapture(c);
     if(!cap->isOpened()) return 0;
     if(w) cap->set(CV_CAP_PROP_FRAME_WIDTH, w);
     if(h) cap->set(CV_CAP_PROP_FRAME_HEIGHT, h);
@@ -339,8 +343,8 @@ void *open_video_stream(const char *f, int c, int w, int h, int fps)
 
 image get_image_from_stream(void *p)
 {
-    VideoCapture *cap = (VideoCapture *)p;
-    Mat m;
+    cv::VideoCapture *cap = (cv::VideoCapture *)p;
+    cv::Mat m;
     *cap >> m;
     if(m.empty()) return make_empty_image(0,0,0);
     return mat_to_image(m);
@@ -355,8 +359,8 @@ image load_image_cv(char *filename, int channels)
     else {
         fprintf(stderr, "OpenCV can't force load with %d channels\n", channels);
     }
-    Mat m;
-    m = imread(filename, flag);
+    cv::Mat m;
+    m = cv::imread(filename, flag);
     if(!m.data){
         fprintf(stderr, "Cannot load image \"%s\"\n", filename);
         char buff[256];
@@ -372,21 +376,21 @@ image load_image_cv(char *filename, int channels)
 
 int show_image_cv(image im, const char* name, int ms)
 {
-    Mat m = image_to_mat(im);
-    imshow(name, m);
-    int c = waitKey(ms);
+    cv::Mat m = image_to_mat(im);
+    cv::imshow(name, m);
+    int c = cv::waitKey(ms);
     if (c != -1) c = c%256;
     return c;
 }
 
 void make_window(char *name, int w, int h, int fullscreen)
 {
-    namedWindow(name, WINDOW_NORMAL); 
+    namedWindow(name, cv::WINDOW_NORMAL); 
     if (fullscreen) {
-        setWindowProperty(name, CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
+        cv::setWindowProperty(name, CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
     } else {
-        resizeWindow(name, w, h);
-        if(strcmp(name, "Demo") == 0) moveWindow(name, 0, 0);
+        cv::resizeWindow(name, w, h);
+        if(strcmp(name, "Demo") == 0) cv::moveWindow(name, 0, 0);
     }
 }
 

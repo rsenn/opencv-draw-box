@@ -14,8 +14,8 @@ import time
 ServerURL = 'http://140.113.199.181:9999'
 Reg_addr = None #if None, Reg_addr = MAC address
 
-DAN.profile['dm_name']='Transmit_Frame'
-DAN.profile['df_list']=['IDF_Frame', 'ODF_Frame']
+DAN.profile['dm_name']='Transmit_Boxes'
+DAN.profile['df_list']=['IDF_Boxes', 'ODF_Boxes']
 DAN.profile['d_name']= None # None for autoNaming
 DAN.device_registration_with_retry(ServerURL, Reg_addr)
 
@@ -25,21 +25,20 @@ def receive_frame_from_iottalk():
 
     #print('start receive frame from iottalk')
     try:
-        data = DAN.pull('ODF_Frame')
+        data = DAN.pull('ODF_Boxes')
         if data != None:
-            frame_string = data[0]
-            person_information = data[1]
+            print("pull")
+            boxes_information = data[0]
             #print(person_information)
-
-            tmp_array = literal_eval(frame_string)
-            tmp_boxes = json.loads(person_information)
+            tmp_boxes = json.loads(boxes_information)
+            #print(tmp_boxes)
             #tmp_nparray = np.array(tmp_array)
             #tmp_buf = tmp_nparray.astype('uint8')
             #frame = cv2.imdecode(tmp_buf, 1)
             #cv2.imshow('Receive',frame)
             #cv2.waitKey(1)
 
-            return (tmp_array, tmp_boxes)
+            return (tmp_boxes,)
 
     except Exception as e:
         print(e)

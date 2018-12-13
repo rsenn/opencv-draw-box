@@ -5,4 +5,5 @@
 
 std::string receive_message(int port, int timeout, int quality);
 
-std::vector<uchar> receive_frame(int port, int timeout, int quality);
+std::vector<unsigned char> receive_frame(int port, int timeout, int quality);
+int receive_frame(std::vector<unsigned char> &frame, int port, int timeout, int quality);
