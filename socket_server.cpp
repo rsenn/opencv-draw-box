@@ -359,7 +359,7 @@ public:
                         std::cerr << "kill client " << sock << std::endl;
                         shutdown(sock, 2);
                         FD_CLR(sock, &masterfds);
-                        cvDestroyWindow("Demo");
+                        cv::destroyWindow("Demo");
                     }
                 }
             }

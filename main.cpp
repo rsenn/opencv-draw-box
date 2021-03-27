@@ -87,7 +87,7 @@ void iot_receive()
                 {
                     PyObject *pFrameListItem = PyList_GetItem(pFrameList, i);
 
-                    uchar num = (uchar)PyInt_AsLong(pFrameListItem);
+                    uchar num = (uchar)PyLong_AsLong(pFrameListItem);
 
                     frame.push_back(num);
 
@@ -108,19 +108,19 @@ void iot_receive()
                 {
                     pBoxDict = PyList_GetItem(pBoxList, i);
 
-                    //std::cout<<PyString_AsString(PyDict_GetItemString(pBoxDict, "name"))<<std::endl;
+                    //std::cout<<PyBytes_AsString(PyDict_GetItemString(pBoxDict, "name"))<<std::endl;
 
-                    name = PyString_AsString(PyDict_GetItemString(pBoxDict, "name"));
-                    id = PyInt_AsLong(PyDict_GetItemString(pBoxDict, "id"));
-                    x1 = PyInt_AsLong(PyDict_GetItemString(pBoxDict, "x1"));
-                    y1 = PyInt_AsLong(PyDict_GetItemString(pBoxDict, "y1"));
-                    x2 = PyInt_AsLong(PyDict_GetItemString(pBoxDict, "x2"));
-                    y2 = PyInt_AsLong(PyDict_GetItemString(pBoxDict, "y2"));
+                    name = PyBytes_AsString(PyDict_GetItemString(pBoxDict, "name"));
+                    id = PyLong_AsLong(PyDict_GetItemString(pBoxDict, "id"));
+                    x1 = PyLong_AsLong(PyDict_GetItemString(pBoxDict, "x1"));
+                    y1 = PyLong_AsLong(PyDict_GetItemString(pBoxDict, "y1"));
+                    x2 = PyLong_AsLong(PyDict_GetItemString(pBoxDict, "x2"));
+                    y2 = PyLong_AsLong(PyDict_GetItemString(pBoxDict, "y2"));
 
                     person_box b = {name, id, x1, y1, x2, y2};
                     boxes.push_back(b);
 
-                    //uchar num = (uchar)PyInt_AsLong(pBoxListItem);
+                    //uchar num = (uchar)PyLong_AsLong(pBoxListItem);
 
                     //frame.push_back(num);
 

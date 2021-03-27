@@ -6,6 +6,8 @@
 #include <iostream>
 
 #include "opencv2/opencv.hpp"
+#include <opencv2/core/core_c.h>
+
 using namespace cv;
 
 #define PERSON_MAX_NUM 10
