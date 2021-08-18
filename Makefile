@@ -2,6 +2,7 @@ CC = gcc
 CXX = g++
 #PYTHON_VERSION = 2.7
 
+COMMON += -std=c++20
 COMMON  += -DOPENCV
 CFLAGS += -DOPENCV
 #CXXFLAGS  += -DOPENCV

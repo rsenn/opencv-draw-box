@@ -7,6 +7,7 @@
 #include <Python.h>
 
 #include <fstream>
+#include <filesystem>
 
 static void * cap;
 static cv::Mat m;
@@ -27,9 +28,16 @@ static PyObject *pModule, *pDict, *pFunc, *pFrameList, *pBoxDict, *pBoxList, *pT
 
 void iot_init()
 {
+    std::wstring pypath = Py_GetPath();
+
+    pypath += ':';
+    pypath += (std::filesystem::current_path() / std::filesystem::path("iottalk")).wstring();
+
     Py_Initialize();
 
-    //PySys_SetPath(PYTHON_IMPORT_PATH);
+    PySys_SetPath(pypath.c_str());
+
+    std::wcout << "PYTHONPATH=" << pypath << std::endl;
 
     //setenv("PYTHONPATH", PYTHON_IMPORT_PATH, 1);
 
